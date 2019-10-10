@@ -39,6 +39,7 @@ export class Gamepad {
           } else {
             gamepad.pressedButtons.delete(buttonNumber);
           }
+
           return false;
         } else {
           return gamepad.latestState.buttons[buttonNumber].pressed;

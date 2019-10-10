@@ -1,19 +1,35 @@
-import { Keyboard, Gamepad } from 'contro';
+import { Vector2 } from 'contro/dist/utils/math';
 // @ts-ignore
 import Vector from 'vectory';
+import { IControl } from './lib/input/interfaces';
+import { Gamepad } from './lib/input/inputs/gamepad';
+
+interface Controls {
+  leftStick: (gamepad: Gamepad) => IControl<Vector2>;
+  rightStick: (gamepad: Gamepad) => IControl<Vector2>;
+}
+
+class Player {
+  public readonly controls: Controls;
+  public direction = new Vector(1, 0);
+  public pos = new Vector(canvas.width / 2, canvas.height / 2);
+
+  constructor(
+    public readonly gamepad: Gamepad,
+    public readonly sprite: HTMLImageElement,
+  ) {
+    this.controls = {
+      leftStick: Gamepad.stick('left'),
+      rightStick: Gamepad.stick('right'),
+    };
+  }
+}
+
+let players: Player[] = [];
+let playersToAdd: Player[] = [];
+let playersToRemove: Player[] = [];
 
 const DEG_TO_RAD = Math.PI / 180;
-
-const keyboard = new Keyboard();
-const gamepad = new Gamepad();
-
-const controls = {
-  forward: keyboard.key('W'),
-  left: keyboard.key('Left'),
-  right: keyboard.key('Right'),
-  // leftStick: gamepad.stick('left'),
-  // rightStick: gamepad.stick('right'),
-};
 
 const canvas = document.createElement('canvas') as HTMLCanvasElement;
 canvas.width = window.innerWidth;
@@ -25,11 +41,6 @@ const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 const radius = 10;
 const fillStyle = '#fff';
-const x = canvas.width / 2;
-const y = canvas.height / 2;
-// let direction = 0;
-let direction = new Vector(1, 0);
-let pos = new Vector(canvas.width / 2, canvas.height / 2);
 
 let dt = 0;
 let last = performance.now();
@@ -75,51 +86,77 @@ buffer.fill();
 const img = new Image();
 img.src = bufferCanvas.toDataURL();
 
+globalThis.addEventListener('gamepadconnected', ((event: GamepadEvent) => {
+  if (event.gamepad.mapping !== 'standard') {
+    console.warn('Gamepad has a nonstandard mapping');
+  }
+  console.log(event.gamepad);
+
+  playersToAdd.push(new Player(new Gamepad(event.gamepad, navigator), img));
+}) as EventListener);
+
+globalThis.addEventListener('gamepaddisconnected', ((event: GamepadEvent) => {
+  console.log(event.gamepad);
+
+  playersToRemove.push(
+    players.find(
+      player => player.gamepad.gamepadIndex === event.gamepad.index,
+    )!,
+  );
+}) as EventListener);
+
 function frame(hrt: DOMHighResTimeStamp) {
   requestAnimationFrame(frame);
 
+  while (playersToAdd.length > 0) {
+    players.push(playersToAdd.pop()!);
+  }
+
+  while (playersToRemove.length > 0) {
+    const playerToRemove = playersToRemove.pop()!;
+
+    players = players.filter(
+      player =>
+        player.gamepad.gamepadIndex !== playerToRemove.gamepad.gamepadIndex,
+    );
+  }
+
   dt = (hrt - last) / 1000;
-
-  if (gamepad.isConnected()) {
-    const leftstick = gamepad.stick('left').query();
-    const rightstick = gamepad.stick('right').query();
-
-    const deadzone = 0.3;
-
-    if (leftstick.y <= -0.5 && leftstick.y >= -1) {
-      pos = pos.add(direction.mul(300 * dt));
-    }
-
-    if (Math.abs(rightstick.x) >= deadzone) {
-      if (Math.sign(rightstick.x) === 1) {
-        direction = direction.rotate(180 * dt * DEG_TO_RAD);
-      } else if (Math.sign(rightstick.x) === -1) {
-        direction = direction.rotate(-180 * dt * DEG_TO_RAD);
-      }
-    }
-  } else if (controls.forward.query()) {
-    pos = pos.add(direction.mul(300 * dt));
-  }
-
-  if (controls.right.query()) {
-    direction = direction.rotate(180 * dt * DEG_TO_RAD);
-  } else if (controls.left.query()) {
-    direction = direction.rotate(-180 * dt * DEG_TO_RAD);
-  }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.translate(pos.x, pos.y);
+  for (const player of players) {
+    if (player.gamepad.connected) {
+      const leftstick = player.controls.leftStick(player.gamepad).query();
+      const rightstick = player.controls.rightStick(player.gamepad).query();
 
-  ctx.rotate(Vector.angleOf(direction));
+      const deadzone = 0.3;
 
-  ctx.drawImage(
-    bufferCanvas,
-    -(bufferCanvas.width / 2),
-    -(bufferCanvas.height / 2),
-  );
+      if (leftstick.y <= -0.5 && leftstick.y >= -1) {
+        player.pos = player.pos.add(player.direction.mul(300 * dt));
+      }
 
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (Math.abs(rightstick.x) >= deadzone) {
+        if (Math.sign(rightstick.x) === 1) {
+          player.direction = player.direction.rotate(180 * dt * DEG_TO_RAD);
+        } else if (Math.sign(rightstick.x) === -1) {
+          player.direction = player.direction.rotate(-180 * dt * DEG_TO_RAD);
+        }
+      }
+    }
+
+    ctx.translate(player.pos.x, player.pos.y);
+
+    ctx.rotate(Vector.angleOf(player.direction));
+
+    ctx.drawImage(
+      player.sprite,
+      -(bufferCanvas.width / 2),
+      -(bufferCanvas.height / 2),
+    );
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
 
   last = hrt;
 }

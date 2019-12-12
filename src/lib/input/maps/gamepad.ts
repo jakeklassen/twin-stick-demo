@@ -3,7 +3,7 @@
  * respective aliases (the strings in the arrays) that can be used with the
  * `Gamepad` class. The first alias for each button will be used as a label.
  */
-export const buttonMap = [
+export const ButtonMap = [
   ['A'],
   ['B'],
   ['X'],
@@ -30,7 +30,7 @@ export function findButtonNumber(button: string | number): number {
 
   let buttonNumber = 0;
 
-  for (const buttonAliases of buttonMap) {
+  for (const buttonAliases of ButtonMap) {
     for (const buttonAlias of buttonAliases) {
       if (button.toLowerCase() === buttonAlias.toLowerCase()) {
         return buttonNumber;
@@ -44,5 +44,5 @@ export function findButtonNumber(button: string | number): number {
 }
 
 export function getButtonLabel(button: number): string {
-  return buttonMap[button][0];
+  return ButtonMap[button][0];
 }

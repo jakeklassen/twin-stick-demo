@@ -8,15 +8,20 @@ export interface IGamepadStick {
   yAxis: number;
 }
 
-const gamepadSticks: { [id: string]: IGamepadStick } = {
+const GamepadSticks: { [id: string]: IGamepadStick } = {
   left: { label: 'Left stick', xAxis: 0, yAxis: 1 },
   right: { label: 'Right stick', xAxis: 2, yAxis: 3 },
 };
 
+export enum ButtonType {
+  Standard,
+  Trigger,
+}
+
 export class Gamepad {
   public static button(
     button: string | number,
-    trigger = true,
+    trigger: ButtonType = ButtonType.Trigger,
   ): (gamepad: Gamepad) => IControl<boolean> {
     const buttonNumber = findButtonNumber(button);
 
@@ -29,7 +34,7 @@ export class Gamepad {
           return false;
         }
 
-        if (trigger) {
+        if (trigger === ButtonType.Trigger) {
           if (gamepad.latestState.buttons[buttonNumber].pressed) {
             if (!gamepad.pressedButtons.has(buttonNumber)) {
               gamepad.pressedButtons.add(buttonNumber);
@@ -54,8 +59,8 @@ export class Gamepad {
     let gpStick: IGamepadStick;
 
     if (typeof stick === 'string') {
-      if (stick in gamepadSticks) {
-        gpStick = gamepadSticks[stick];
+      if (stick in GamepadSticks) {
+        gpStick = GamepadSticks[stick];
       } else {
         throw new Error(`Gamepad stick "${stick}" not found!`);
       }
@@ -100,6 +105,6 @@ export class Gamepad {
   }
 
   public get connected() {
-    return this.navigator.getGamepads()[this.native.index] != null;
+    return this.latestState.connected;
   }
 }

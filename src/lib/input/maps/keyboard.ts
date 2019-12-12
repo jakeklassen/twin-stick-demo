@@ -5,7 +5,7 @@
  * aliases (property values)  that can be used with the `Keyboard` class. The
  * first alias for each key value will be used as a label.
  */
-export const keyMap: { [value: string]: string[] } = {
+export const KeyMap: { [value: string]: string[] } = {
   ' ': ['Space', 'Spacebar', 'Space Bar'],
   AltGraph: ['Alt Gr'],
   ArrowDown: ['Down'],
@@ -28,8 +28,8 @@ export function findKeyValue(keyString: string): string {
     return keyString.toLowerCase();
   }
 
-  Object.keys(keyMap).forEach(keyValue => {
-    keyMap[keyValue].forEach(key => {
+  Object.keys(KeyMap).forEach(keyValue => {
+    KeyMap[keyValue].forEach(key => {
       if (keyString.toLowerCase() === key.toLowerCase()) {
         keyString = keyValue;
       }
@@ -40,8 +40,8 @@ export function findKeyValue(keyString: string): string {
 }
 
 export function getKeyLabel(key: string): string {
-  return key in keyMap
-    ? keyMap[key][0]
+  return key in KeyMap
+    ? KeyMap[key][0]
     : key.length === 1
     ? key.toUpperCase()
     : key;

@@ -10,7 +10,7 @@ export function or(...controls: Array<IControl<any>>): IControl<any> {
       return 'Not implemented';
     },
 
-    query: () => {
+    query() {
       let sampleQueryValue;
       for (const control of controls) {
         const queryValue = control.query();

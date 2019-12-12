@@ -1,8 +1,8 @@
-import { Vector2 } from 'contro/dist/utils/math';
 // @ts-ignore
 import Vector from 'vectory';
-import { IControl } from './lib/input/interfaces';
 import { Gamepad } from './lib/input/inputs/gamepad';
+import { IControl } from './lib/input/interfaces';
+import { Vector2 } from './lib/input/math/vector2';
 
 interface Controls {
   leftStick: (gamepad: Gamepad) => IControl<Vector2>;
@@ -10,19 +10,17 @@ interface Controls {
 }
 
 class Player {
-  public readonly controls: Controls;
+  public readonly controls: Controls = {
+    leftStick: Gamepad.stick('left'),
+    rightStick: Gamepad.stick('right'),
+  };
   public direction = new Vector(1, 0);
   public pos = new Vector(canvas.width / 2, canvas.height / 2);
 
   constructor(
     public readonly gamepad: Gamepad,
     public readonly sprite: HTMLImageElement,
-  ) {
-    this.controls = {
-      leftStick: Gamepad.stick('left'),
-      rightStick: Gamepad.stick('right'),
-    };
-  }
+  ) {}
 }
 
 let players: Player[] = [];
@@ -37,7 +35,7 @@ canvas.height = window.innerHeight;
 
 const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-(document.querySelector('#container') as Element).appendChild(canvas);
+document.querySelector('#container')!.appendChild(canvas);
 
 const radius = 10;
 const fillStyle = '#fff';
@@ -104,6 +102,10 @@ globalThis.addEventListener('gamepaddisconnected', ((event: GamepadEvent) => {
     )!,
   );
 }) as EventListener);
+
+window.addEventListener('keypress', (event: KeyboardEvent) => {
+  console.log(event);
+});
 
 function frame(hrt: DOMHighResTimeStamp) {
   requestAnimationFrame(frame);

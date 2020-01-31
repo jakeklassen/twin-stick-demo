@@ -106,6 +106,8 @@ globalThis.addEventListener('gamepaddisconnected', ((event: GamepadEvent) => {
 }) as EventListener);
 
 function frame(hrt: DOMHighResTimeStamp) {
+  dt = (hrt - last) / 1000;
+
   requestAnimationFrame(frame);
 
   while (playersToAdd.length > 0) {
@@ -120,8 +122,6 @@ function frame(hrt: DOMHighResTimeStamp) {
         player.gamepad.gamepadIndex !== playerToRemove.gamepad.gamepadIndex,
     );
   }
-
-  dt = (hrt - last) / 1000;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
